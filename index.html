@@ -16,6 +16,8 @@
         font-family: 'Aptos', sans-serif;
         background-color: #111;
         color: white;
+        position: relative;
+        transition: background-color 0.3s;
     }
 
     #timerDisplay {
@@ -60,6 +62,25 @@
     .reset:hover {
         background-color: #c82333;
     }
+
+    /* Flash animation */
+    .flash {
+        animation: flashBg 0.5s alternate infinite;
+    }
+    @keyframes flashBg {
+        from { background-color: #111; }
+        to { background-color: red; }
+    }
+
+    /* Footer text */
+    .footer {
+        position: absolute;
+        bottom: 10px;
+        font-size: 1rem;
+        font-weight: bold;
+        text-align: center;
+        color: #aaa;
+    }
 </style>
 </head>
 <body>
@@ -74,15 +95,27 @@
 
 <div id="timerDisplay">00:00:00</div>
 
+<div class="footer">Created by Sadik Pathan</div>
+
 <audio id="beepSound">
     <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" type="audio/ogg">
 </audio>
 
 <script>
 let timerInterval;
+let beep = document.getElementById("beepSound");
+
+// Unlock audio after first interaction
+document.addEventListener("click", () => {
+    beep.play().then(() => {
+        beep.pause();
+        beep.currentTime = 0;
+    }).catch(() => {});
+}, { once: true });
 
 function startTimer() {
     clearInterval(timerInterval);
+    document.body.classList.remove("flash");
 
     let hours = parseInt(document.getElementById('hours').value) || 0;
     let minutes = parseInt(document.getElementById('minutes').value) || 0;
@@ -107,7 +140,8 @@ function runTimer(endTime) {
         if (remainingSeconds <= 0) {
             clearInterval(timerInterval);
             localStorage.removeItem("timerEndTime");
-            document.getElementById("beepSound").play();
+            beep.play();
+            startFlashing();
         }
     }, 1000);
 }
@@ -123,9 +157,17 @@ function resetTimer() {
     clearInterval(timerInterval);
     localStorage.removeItem("timerEndTime");
     updateDisplay(0);
+    document.body.classList.remove("flash");
     document.getElementById('hours').value = '';
     document.getElementById('minutes').value = '';
     document.getElementById('seconds').value = '';
+}
+
+function startFlashing() {
+    document.body.classList.add("flash");
+    setTimeout(() => {
+        document.body.classList.remove("flash");
+    }, 5000);
 }
 
 // Resume timer if page refreshed
