@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Centered Timer</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Aptos:wght@700&display=swap');
+
+    body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Aptos', sans-serif;
+        background-color: #111;
+        color: white;
+    }
+
+    #timerDisplay {
+        font-size: 5rem;
+        font-weight: bold;
+        margin-top: 20px;
+    }
+
+    .controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    input, button {
+        padding: 10px;
+        font-size: 1rem;
+        border: none;
+        border-radius: 8px;
+    }
+
+    input {
+        width: 80px;
+        text-align: center;
+    }
+
+    button {
+        background-color: #28a745;
+        color: white;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: #218838;
+    }
+
+    .reset {
+        background-color: #dc3545;
+    }
+    .reset:hover {
+        background-color: #c82333;
+    }
+</style>
+</head>
+<body>
+
+<div class="controls">
+    <input type="number" id="hours" min="0" placeholder="HH">
+    <input type="number" id="minutes" min="0" max="59" placeholder="MM">
+    <input type="number" id="seconds" min="0" max="59" placeholder="SS">
+    <button onclick="startTimer()">Start</button>
+    <button class="reset" onclick="resetTimer()">Reset</button>
+</div>
+
+<div id="timerDisplay">00:00:00</div>
+
+<audio id="beepSound">
+    <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" type="audio/ogg">
+</audio>
+
+<script>
+let timerInterval;
+
+function startTimer() {
+    clearInterval(timerInterval);
+
+    let hours = parseInt(document.getElementById('hours').value) || 0;
+    let minutes = parseInt(document.getElementById('minutes').value) || 0;
+    let seconds = parseInt(document.getElementById('seconds').value) || 0;
+
+    let totalSeconds = hours * 3600 + minutes * 60 + seconds;
+    if (totalSeconds <= 0) return;
+
+    let endTime = Date.now() + totalSeconds * 1000;
+    localStorage.setItem("timerEndTime", endTime);
+
+    runTimer(endTime);
+}
+
+function runTimer(endTime) {
+    updateDisplay(Math.max(0, Math.floor((endTime - Date.now()) / 1000)));
+
+    timerInterval = setInterval(() => {
+        let remainingSeconds = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+        updateDisplay(remainingSeconds);
+
+        if (remainingSeconds <= 0) {
+            clearInterval(timerInterval);
+            localStorage.removeItem("timerEndTime");
+            document.getElementById("beepSound").play();
+        }
+    }, 1000);
+}
+
+function updateDisplay(totalSeconds) {
+    let hrs = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+    let mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+    let secs = String(totalSeconds % 60).padStart(2, '0');
+    document.getElementById('timerDisplay').textContent = `${hrs}:${mins}:${secs}`;
+}
+
+function resetTimer() {
+    clearInterval(timerInterval);
+    localStorage.removeItem("timerEndTime");
+    updateDisplay(0);
+    document.getElementById('hours').value = '';
+    document.getElementById('minutes').value = '';
+    document.getElementById('seconds').value = '';
+}
+
+// Resume timer if page refreshed
+window.onload = function() {
+    let endTime = localStorage.getItem("timerEndTime");
+    if (endTime && Date.now() < endTime) {
+        runTimer(parseInt(endTime));
+    }
+};
+</script>
+
+</body>
+</html>
